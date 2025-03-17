@@ -1,0 +1,105 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}      % UTF-8 encoding
+\usepackage[T1]{fontenc}         % T1 font encoding
+\usepackage[english]{babel}      % English language in the document
+\usepackage{graphicx}            % For including graphics
+\usepackage{float}               % Allows using [H] in figure environments
+\usepackage{amsmath}             % Additional math environments
+
+\title{Report: Summation Error Analysis in an n-Gon}
+\author{Wiktoria Sakowska}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+In numerical computations, it is crucial to minimize errors resulting from limited floating-point precision. When summing a large number of values, small rounding errors can accumulate. In particular, when the resulting sum is close to zero, these errors can become significant relative to the expected value.\\
+
+\section{Results and Analysis}
+
+\subsection{Constructing the Vertices (H1)}
+
+In the stage labeled \textbf{H1}, we calculate the vertices of a regular polygon starting from the point \(\mathbf{v}_0 = (1,0)\).  
+Theoretically, with exact arithmetic, we would have
+\[
+  \mathbf{v}_n \;=\; \mathbf{v}_0 + \sum_{i=0}^{n-1} \mathbf{w}_i \;=\; \mathbf{v}_0,
+\]
+which means the polygon \emph{perfectly} closes, returning exactly to the starting point \((1,0)\).  
+However, in practice, due to the limited precision of the \texttt{double} type and rounding errors in repeated rotations (the \texttt{cos()} and \texttt{sin()} functions), the value of \(\mathbf{v}_n\) may differ slightly from \((1,0)\).  
+Typically, these discrepancies are on the order of \(10^{-15}\) or \(10^{-14}\), which is characteristic of the machine precision for \texttt{double}.
+
+\subsection{Summation Errors (H2, H3, H4)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{global_errors.png}
+    \caption{Summation errors for different values of \(n\) (logarithmic scale).}
+    \label{fig:global_errors}
+\end{figure}
+
+Figure~\ref{fig:global_errors} shows the norm of errors obtained for three summation methods (H2, H3, H4). The plot is presented on a logarithmic scale to better illustrate differences on the order of \(10^{-15}\) or \(10^{-14}\). 
+
+As can be seen, all three methods produce errors comparable to the level of machine precision \((\approx 10^{-16})\).  
+\begin{itemize}
+    \item In some ranges of \(n\), the H3 method can be slightly less accurate than H2 (the error is larger by a factor of 2--3), which stems from the fact that the resulting sum is very small, and small changes in the summation order can impact the final result.
+    \item In other places, H3 and H4 yield slightly smaller errors than H2.
+\end{itemize}
+However, there is no significant or consistent advantage of any particular method; the results generally fluctuate at a similar level.
+
+\subsection{Sorted \(x\) Values}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{global_sorted_x.png}
+    \caption{Sorted \(x\) values (positive and negative) for different \(n\).}
+    \label{fig:global_sorted_x}
+\end{figure}
+
+Figure~\ref{fig:global_sorted_x} illustrates the distribution of the \(x\) component of the vectors \(\vec{w}_i\) after splitting them into positive and negative values and then sorting them.  
+\begin{itemize}
+    \item It can be observed that most points cluster near zero, especially for large \(n\). 
+    \item Only a few values reach around \(\pm 0.6\). 
+    \item As \(n\) increases, individual vectors become shorter (because the angle between them decreases and \(\vec{w}_i\) approximately form a polygon that closes near the point (1,0)).
+\end{itemize}
+This spread of \(\vec{w}_i\) values influences the summation error: when summing numbers of similar magnitudes, the error is smaller than when summing a very large number with a very small one.
+
+\subsection{Error Ratios (H3/H2 and H4/H2)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{global_error_ratios.png}
+    \caption{Error ratios: \( \frac{H3}{H2} \) and \( \frac{H4}{H2} \) as a function of \(n\) (logarithmic scale).}
+    \label{fig:global_error_ratios}
+\end{figure}
+
+Figure~\ref{fig:global_error_ratios} shows the ratios of H3/H2 and H4/H2 errors. Most points hover around 1, indicating that the results from H3 and H4 are often comparable to those of H2. However, there are instances where:
+\begin{itemize}
+    \item H3/H2 or H4/H2 slightly exceed 1 (meaning H3/H4 produce slightly larger errors),
+    \item In other cases, these ratios fall below 1 (indicating H3/H4 improve the result).
+\end{itemize}
+Nevertheless, these changes typically do not exceed a factor of 2--3 in either direction, pointing to relatively small differences in the overall analysis.
+
+\subsection{Error Differences: (H2 - H3) and (H2 - H4)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{global_error_differences.png}
+    \caption{Error differences: \( H2 - H3 \) and \( H2 - H4 \) for various \(n\) (logarithmic scale).}
+    \label{fig:global_error_differences}
+\end{figure}
+
+Figure~\ref{fig:global_error_differences} shows how much (in absolute terms) H3 and H4 errors differ from H2. Since the errors themselves are on the order of \(10^{-15}\), these differences are also around \(10^{-15}\) -- \(10^{-14}\).  
+\begin{itemize}
+    \item For some values of \(n\), the H3 method yields a slightly larger error than H2 (making \(H2 - H3 < 0\), which may not be clearly visible on a log scale since negative values are harder to represent).
+    \item Similarly, H4 can be either better or worse than H2 depending on how the vectors line up and the scale of the final sum.
+\end{itemize}
+In conclusion, for this specific problem (summing n-gon vectors whose total sum is near zero), none of the methods provides a systematic and substantial advantage.
+
+\section{Discussion of Results}
+From the above plots, we can conclude that:
+\begin{itemize}
+    \item The error (sum norm) remains within \(10^{-15}\)--\(10^{-14}\), which is very close to the limit of double precision.
+    \item H3 and H4 sometimes produce slightly larger errors than H2, and sometimes smaller --- there is no clear trend indicating a definite advantage of one method over another.
+    \item The reason for such behavior is that the final sum is nearly zero (the polygon “closes”), so even small differences in the summation order can result in minor deviations, sometimes favoring the ordered or heap-based method, and sometimes not.
+    \item If the final sum were not so close to zero, and the vectors were more scattered, a more pronounced advantage of H3 or H4 over H2 might become evident.
+\end{itemize}
+
+\end{document}
